@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  MY FIRST TO-DO APP  🎉
+  ------------------------------------------------------------
+  This whole app is ONE file. It has three parts:
+    1. HTML   = the STRUCTURE  (the bones / the counter layout)
+    2. CSS    = the STYLE      (the paint / how it looks)
+    3. JS     = the BEHAVIOR   (the brain / what happens on click)
+  Read the comments (the greyed-out text) to see what each bit does.
+  ============================================================
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My To-Do List</title>
+
+  <!-- ============ PART 2: THE STYLE (CSS) ============ -->
+  <style>
+    /* The whole page */
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f3f1ff;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+      margin: 0;
+      color: #2c2c2a;
+    }
+
+    /* The white card in the middle */
+    .card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 440px;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(90, 80, 200, 0.12);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 24px;
+    }
+    .subtitle {
+      margin: 0 0 20px;
+      color: #7a7a75;
+      font-size: 14px;
+    }
+
+    /* The row where you type + the Add button */
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    #taskInput {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1.5px solid #e0def5;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+    }
+    #taskInput:focus { border-color: #7f77dd; }
+
+    #addBtn {
+      background: #7f77dd;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #addBtn:hover { background: #6b63c9; }
+
+    /* The list of tasks */
+    ul { list-style: none; padding: 0; margin: 0; }
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 6px;
+      border-bottom: 1px solid #f0eefb;
+    }
+    li .text { flex: 1; font-size: 15px; }
+
+    /* A task that is checked off gets crossed out and greyed */
+    li.done .text {
+      text-decoration: line-through;
+      color: #b4b2a9;
+    }
+
+    /* The little delete (x) button */
+    .del {
+      background: none;
+      border: none;
+      color: #d4537e;
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .empty {
+      text-align: center;
+      color: #b4b2a9;
+      font-size: 14px;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ============ PART 1: THE STRUCTURE (HTML) ============ -->
+  <div class="card">
+    <h1>Tarkowsk1's Tasks ✅</h1>
+    <p class="subtitle">Type a task, hit Add, check it off when done.</p>
+
+    <div class="input-row">
+      <input id="taskInput" type="text" placeholder="e.g. Learn what a commit is" />
+      <button id="addBtn">Add</button>
+    </div>
+
+    <!-- Your tasks will appear inside here, added by JavaScript -->
+    <ul id="taskList"></ul>
+  </div>
+
+  <!-- ============ PART 3: THE BRAIN (JavaScript) ============ -->
+  <script>
+    // Grab the parts of the page we need to work with.
+    const input = document.getElementById("taskInput");
+    const addBtn = document.getElementById("addBtn");
+    const list = document.getElementById("taskList");
+
+    // Our tasks live in this array. Each task looks like: { text: "...", done: false }
+    // We load any saved tasks from the browser's memory (localStorage) if they exist.
+    let tasks = JSON.parse(localStorage.getItem("myTasks")) || [];
+
+    // Save the current tasks into the browser so they're still here next time.
+    function save() {
+      localStorage.setItem("myTasks", JSON.stringify(tasks));
+    }
+
+    // Draw the whole list on the screen based on our "tasks" array.
+    function render() {
+      list.innerHTML = ""; // clear what's shown, then rebuild it
+
+      if (tasks.length === 0) {
+        list.innerHTML = '<p class="empty">No tasks yet — add your first one! 🌱</p>';
+        return;
+      }
+
+      // For each task, build one row.
+      tasks.forEach((task, index) => {
+        const li = document.createElement("li");
+        if (task.done) li.classList.add("done");
+
+        // A checkbox to mark it done.
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.onclick = () => {
+          tasks[index].done = !tasks[index].done; // flip done/not-done
+          save();
+          render();
+        };
+
+        // The task text.
+        const span = document.createElement("span");
+        span.className = "text";
+        span.textContent = task.text;
+
+        // A delete button.
+        const del = document.createElement("button");
+        del.className = "del";
+        del.textContent = "×";
+        del.onclick = () => {
+          tasks.splice(index, 1); // remove this task from the array
+          save();
+          render();
+        };
+
+        li.append(checkbox, span, del);
+        list.appendChild(li);
+      });
+    }
+
+    // Add a new task from whatever is typed in the box.
+    function addTask() {
+      const text = input.value.trim();
+      if (text === "") return; // ignore empty input
+      tasks.push({ text: text, done: false });
+      input.value = ""; // clear the box
+      save();
+      render();
+    }
+
+    // Wire up the button and the Enter key.
+    addBtn.onclick = addTask;
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addTask();
+    });
+
+    // Draw the list when the page first opens.
+    render();
+  </script>
+</body>
+</html>
